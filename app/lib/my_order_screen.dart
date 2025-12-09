@@ -84,7 +84,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       ),
                     ],
                   ),
-                  trailing: const Icon(Icons.arrow_back_ios, size: 14),
                   trailing: IconButton(
                     icon: const Icon(Icons.map, color: Colors.blue),
                     onPressed: () {
