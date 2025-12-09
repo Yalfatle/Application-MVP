@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'tracking_screen.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -84,6 +85,19 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     ],
                   ),
                   trailing: const Icon(Icons.arrow_back_ios, size: 14),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.map, color: Colors.blue),
+                    onPressed: () {
+                      // For MVP, we pass the Lab's location as the "Runner's" location.
+                      // In the future, we fetch the runner's live GPS from the database.
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(
+                        userLat: 33.3128, // Hardcoded Patient (Mansour)
+                        userLng: 44.3614,
+                        labLat: 33.3150, // Slight offset to simulate runner distance
+                        labLng: 44.3650,
+                      )));
+                    },
+                  ),
                 ),
               );
             },

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'login_screen.dart'; 
 import 'my_order_screen.dart';
+import 'lab_dashboard_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -15,21 +16,60 @@ Future<void> main() async {
   runApp(const MukhtabaratApp());
 }
 
-class MukhtabaratApp extends StatelessWidget {
+class MukhtabaratApp extends StatefulWidget {
   const MukhtabaratApp({super.key});
+
+  @override
+  State<MukhtabaratApp> createState() => _MukhtabaratAppState();
+}
+
+class _MukhtabaratAppState extends State<MukhtabaratApp> {
+  // By default, we show a loader until we check the role
+  Widget _homeScreen = const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRole();
+  }
+
+  Future<void> _checkRole() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) {
+      // Not logged in -> Go to Patient List (Guest Mode)
+      setState(() => _homeScreen = const LabListScreen());
+      return;
+    }
+
+    // Check Profile Role
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+      final role = data['role']; // 'user' or 'lab_admin'
+
+      if (role == 'lab_admin') {
+        setState(() => _homeScreen = const LabDashboardScreen());
+      } else {
+        setState(() => _homeScreen = const LabListScreen());
+      }
+    } catch (e) {
+      // Fallback
+      setState(() => _homeScreen = const LabListScreen());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Mukhtabarat',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Arial',
-        useMaterial3: true,
-      ),
-      // Temporary: Go straight to login to create your user
-      home: const LabListScreen(),
+      theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Arial'),
+      home: _homeScreen, // <--- Dynamic Home
     );
   }
 }
