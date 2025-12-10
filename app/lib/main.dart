@@ -194,20 +194,19 @@ class LabDetailsScreen extends StatelessWidget {
     }
 
     try {
-      // 1. Calculate Financials
-      final price = pack['price']; // e.g., 25000
-      final commission = price * 0.10; // 10% fee = 2500
+      // 1. Get Price
+      final price = pack['price']; 
 
-      // 2. Insert into Database
+      // 2. Insert into Database (Database handles the rest)
       await Supabase.instance.client.from('orders').insert({
         'user_id': user.id,
         'lab_id': labId,
-        'status': 'pending', // Waiting for Lab to accept
+        'status': 'pending',
         'total_price': price,
-        'commission_fee': commission,
-        'payment_method': 'cash', // Hardcoded for MVP
-        'package_name': pack['name_ar'], // The column we just added
-        'delivery_lat': 33.3128, // Hardcoded user location for now (Mansour)
+        // 'commission_fee': AUTOMATICALLY CALCULATED BY POSTGRES
+        'payment_method': 'cash',
+        'package_name': pack['name_ar'],
+        'delivery_lat': 33.3128,
         'delivery_lng': 44.3614,
       });
 
