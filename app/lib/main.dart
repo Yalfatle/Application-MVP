@@ -37,12 +37,11 @@ class _MukhtabaratAppState extends State<MukhtabaratApp> {
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user == null) {
-      // Not logged in -> Go to Patient List (Guest Mode)
-      setState(() => _homeScreen = const LabListScreen());
+      // Not logged in? Show Login Screen (or Patient List)
+      setState(() => _homeScreen = const LoginScreen()); 
       return;
     }
 
-    // Check Profile Role
     try {
       final data = await Supabase.instance.client
           .from('profiles')
@@ -50,15 +49,14 @@ class _MukhtabaratAppState extends State<MukhtabaratApp> {
           .eq('id', user.id)
           .single();
 
-      final role = data['role']; // 'user' or 'lab_admin'
-
-      if (role == 'lab_admin') {
+      // IF role is admin -> Dashboard. ELSE -> Patient List
+      if (data['role'] == 'lab_admin') {
         setState(() => _homeScreen = const LabDashboardScreen());
       } else {
         setState(() => _homeScreen = const LabListScreen());
       }
     } catch (e) {
-      // Fallback
+      // If profile is missing (the error you had), default to Patient List
       setState(() => _homeScreen = const LabListScreen());
     }
   }
@@ -105,12 +103,31 @@ class _LabListScreenState extends State<LabListScreen> {
       appBar: AppBar(
         title: const Text("المختبرات القريبة"),
         centerTitle: true,
+        // Left side: My Orders
         leading: IconButton(
-          icon: const Icon(Icons.receipt_long), // The "Orders" icon
+          icon: const Icon(Icons.receipt_long), 
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const MyOrdersScreen()));
           },
         ),
+        // Right side: Log Out
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: () async {
+              // 1. Sign out from Supabase
+              await Supabase.instance.client.auth.signOut();
+              
+              // 2. Go back to Login Screen
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _labsFuture,

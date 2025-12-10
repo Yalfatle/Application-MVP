@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:geolocator/geolocator.dart'; // For distance math
-import 'package:url_launcher/url_launcher.dart'; // To open Google Maps
+import 'package:geolocator/geolocator.dart'; 
+import 'package:url_launcher/url_launcher.dart'; 
+import 'login_screen.dart'; // <--- ADDED THIS IMPORT
 
 class LabDashboardScreen extends StatefulWidget {
   const LabDashboardScreen({super.key});
@@ -13,8 +14,6 @@ class LabDashboardScreen extends StatefulWidget {
 
 class _LabDashboardScreenState extends State<LabDashboardScreen> {
   String? _myLabId;
-  // Hardcoded Lab Location (Mansour) for MVP distance calculation
-  // In a real app, we would fetch these from the 'labs' table columns
   final double _labLat = 33.3128;
   final double _labLng = 44.3614;
   bool _isLoading = true;
@@ -54,15 +53,17 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
     );
 
     if (result != null) {
-      // In web, use bytes. In mobile, use path. 
-      // This implementation is safer for both in this specific context.
-      final fileBytes = result.files.first.bytes; 
+      final fileBytes = result.files.first.bytes;
+      // Note: If you run this on Mobile, you might need 'result.files.first.path' 
+      // instead of bytes depending on the implementation, but bytes works for general Supabase upload.
+      if (fileBytes == null) return; 
+
       final fileName = "${DateTime.now().millisecondsSinceEpoch}_${result.files.first.name}";
 
       try {
         await Supabase.instance.client.storage
             .from('medical_reports')
-            .uploadBinary(fileName, fileBytes!);
+            .uploadBinary(fileName, fileBytes);
 
         final pdfUrl = Supabase.instance.client.storage
             .from('medical_reports')
@@ -73,9 +74,13 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
           'result_pdf_url': pdfUrl,
         }).eq('id', orderId);
 
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Report Sent! ✅")));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Report Sent! ✅")));
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Upload Failed: $e")));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Upload Failed: $e")));
+        }
       }
     }
   }
@@ -91,9 +96,11 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
   Future<void> _openMap(double lat, double lng) async {
     final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
     if (await canLaunchUrl(googleMapsUrl)) {
-      await launchUrl(googleMapsUrl);
+      await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Could not open Maps")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Could not open Maps")));
+      }
     }
   }
 
@@ -109,7 +116,26 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
         .order('created_at', ascending: false);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Lab Control Panel"), backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+      appBar: AppBar(
+        title: const Text("Control Panel"), 
+        backgroundColor: Colors.indigo, 
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await Supabase.instance.client.auth.signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  // FIXED: Removed 'const' before LoginScreen()
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+          )
+        ],
+      ),      
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _ordersStream,
         builder: (context, snapshot) {
@@ -137,8 +163,7 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
   }
 }
 
-// --- HELPER WIDGET FOR CLEANER CODE ---
-// REPLACE THE OLD OrderCard WITH THIS SMART VERSION
+// --- HELPER WIDGET ---
 class OrderCard extends StatefulWidget {
   final Map<String, dynamic> order;
   final double labLat;
@@ -160,17 +185,17 @@ class OrderCard extends StatefulWidget {
 }
 
 class _OrderCardState extends State<OrderCard> {
-  bool _isProcessing = false; // Tracks if we are currently clicking a button
+  bool _isProcessing = false;
 
-  // Wrapper to handle the "Loading" animation
   Future<void> _handleAction(String newStatus) async {
-    setState(() => _isProcessing = true); // Start Spinner
+    setState(() => _isProcessing = true);
     try {
       await widget.onUpdateStatus(widget.order['id'], newStatus);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
     } finally {
-      // STOP Spinner regardless of success or failure
       if (mounted) {
         setState(() => _isProcessing = false);
       }
@@ -180,16 +205,14 @@ class _OrderCardState extends State<OrderCard> {
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
-    final userLat = order['delivery_lat'] ?? 0.0;
-    final userLng = order['delivery_lng'] ?? 0.0;
+    final userLat = (order['delivery_lat'] ?? 0.0).toDouble();
+    final userLng = (order['delivery_lng'] ?? 0.0).toDouble();
     
-    // Calculate Distance
     final distanceInMeters = Geolocator.distanceBetween(
       widget.labLat, widget.labLng, userLat, userLng
     );
     final distanceKm = (distanceInMeters / 1000).toStringAsFixed(1);
 
-    // Fetch User Name
     final userFuture = Supabase.instance.client
         .from('profiles')
         .select('full_name, phone')
@@ -203,7 +226,6 @@ class _OrderCardState extends State<OrderCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -213,7 +235,6 @@ class _OrderCardState extends State<OrderCard> {
             ),
             const Divider(),
 
-            // Patient Details
             FutureBuilder(
               future: userFuture,
               builder: (context, snapshot) {
@@ -232,7 +253,6 @@ class _OrderCardState extends State<OrderCard> {
               },
             ),
 
-            // Location
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
@@ -257,11 +277,10 @@ class _OrderCardState extends State<OrderCard> {
             ),
             const SizedBox(height: 15),
 
-            // ACTION BUTTONS (With Loading Logic)
             if (_isProcessing)
               const Center(child: CircularProgressIndicator())
             else
-              _buildActionButtons(order['status']),
+              _buildActionButtons(order['status'] ?? 'pending'),
           ],
         ),
       ),
@@ -269,7 +288,6 @@ class _OrderCardState extends State<OrderCard> {
   }
 
   Widget _buildActionButtons(String status) {
-    // 1. PENDING: Accept or Refuse
     if (status == 'pending') {
       return Row(children: [
         Expanded(
@@ -290,7 +308,6 @@ class _OrderCardState extends State<OrderCard> {
       ]);
     }
 
-    // 2. ACCEPTED: Dispatch
     if (status == 'accepted') {
       return SizedBox(
         width: double.infinity, 
@@ -301,7 +318,6 @@ class _OrderCardState extends State<OrderCard> {
       );
     }
 
-    // 3. ON WAY: Arrived/Sample Taken
     if (status == 'on_way') {
       return SizedBox(
         width: double.infinity,
@@ -313,19 +329,17 @@ class _OrderCardState extends State<OrderCard> {
       );
     }
 
-    // 4. SAMPLE TAKEN: Upload Result
     if (status == 'sample_taken') {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () => _handleAction('results_ready'), // This triggers PDF upload logic
+          onPressed: () => _handleAction('results_ready'),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
           child: const Text("Upload PDF Report 📄", style: TextStyle(color: Colors.white)),
         ),
       );
     }
 
-    // 5. COMPLETED
     return const Center(
       child: Text("✅ Order Completed", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16))
     );
