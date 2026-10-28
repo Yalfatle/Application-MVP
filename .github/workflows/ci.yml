@@ -61,8 +61,16 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed lib test || true
-      - run: flutter analyze --no-fatal-infos
+      - name: Analyze
+        run: |
+          # Show every analyzer note as an annotation on the commit / PR.
+          dart analyze --format=machine lib test 2> analyze.txt || true
+          while IFS='|' read -r sev type code file line col len msg; do
+            [ -z "$file" ] && continue
+            level=notice; [ "$sev" = "WARNING" ] && level=warning; [ "$sev" = "ERROR" ] && level=error
+            echo "::${level} file=app/${file#"$PWD/"},line=${line},col=${col}::${code}: ${msg}"
+          done < analyze.txt
+          flutter analyze --no-fatal-infos
       - run: flutter test
       - name: Build web (admin panel)
         run: flutter build web --release --dart-define-from-file=config/ci.json
