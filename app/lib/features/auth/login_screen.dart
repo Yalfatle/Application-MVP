@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/env.dart';
 import '../../core/errors.dart';
 import '../../core/format.dart';
 import '../../core/session.dart';
@@ -52,9 +53,12 @@ class LoginScreen extends StatelessWidget {
                   Tab(icon: const Icon(Icons.badge_outlined), text: t.staffTab),
                 ]),
                 const SizedBox(height: 24),
-                const SizedBox(
-                  height: 360,
-                  child: TabBarView(children: [_PatientLogin(), _StaffLogin()]),
+                SizedBox(
+                  height: Env.passwordPatientLogin ? 440 : 360,
+                  child: TabBarView(children: [
+                    Env.passwordPatientLogin ? const _PatientPasswordLogin() : const _PatientLogin(),
+                    const _StaffLogin(),
+                  ]),
                 ),
               ],
             ),
@@ -301,6 +305,131 @@ class _StaffLoginState extends State<_StaffLogin> {
           child: _busy
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
               : Text(t.signIn),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Temporary: patients sign up / in with email + password until the
+/// WhatsApp Business number exists. Turned on with PATIENT_LOGIN=password.
+class _PatientPasswordLogin extends StatefulWidget {
+  const _PatientPasswordLogin();
+  @override
+  State<_PatientPasswordLogin> createState() => _PatientPasswordLoginState();
+}
+
+class _PatientPasswordLoginState extends State<_PatientPasswordLogin> {
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _creating = false;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final t = AppLocalizations.of(context);
+    final email = _email.text.trim().toLowerCase();
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      setState(() => _error = t.invalidEmail);
+      return;
+    }
+    if (_password.text.length < 8) {
+      setState(() => _error = t.passwordMin);
+      return;
+    }
+    if (_creating && _name.text.trim().length < 2) {
+      setState(() => _error = t.nameNeeded);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final client = Supabase.instance.client;
+    try {
+      if (_creating) {
+        try {
+          await client.functions.invoke('password-signup', body: {
+            'email': email,
+            'password': _password.text,
+            'full_name': _name.text.trim(),
+            'locale': SessionScope.read(context).lang,
+          });
+        } on FunctionException catch (e) {
+          final code = e.details is Map ? (e.details as Map)['error'] : null;
+          if (mounted) setState(() => _error = code == 'account_exists' ? t.accountExists : t.errorGeneric);
+          return;
+        }
+      }
+      await client.auth.signInWithPassword(email: email, password: _password.text);
+    } on AuthException {
+      if (mounted) setState(() => _error = t.wrongCredentials);
+    } catch (e) {
+      if (mounted) setState(() => _error = friendlyError(context, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return AutofillGroup(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (_creating) ...[
+          TextField(
+            controller: _name,
+            textCapitalization: TextCapitalization.words,
+            autofillHints: const [AutofillHints.name],
+            decoration: InputDecoration(labelText: t.fullName, prefixIcon: const Icon(Icons.person_outline)),
+          ),
+          const SizedBox(height: 12),
+        ],
+        TextField(
+          controller: _email,
+          keyboardType: TextInputType.emailAddress,
+          textDirection: TextDirection.ltr,
+          autofillHints: const [AutofillHints.email],
+          decoration: InputDecoration(labelText: t.email, prefixIcon: const Icon(Icons.alternate_email)),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _password,
+          obscureText: true,
+          autofillHints: [_creating ? AutofillHints.newPassword : AutofillHints.password],
+          decoration: InputDecoration(
+            labelText: t.password,
+            helperText: _creating ? t.passwordMin : null,
+            prefixIcon: const Icon(Icons.lock_outline),
+          ),
+          onSubmitted: (_) => _submit(),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error), textAlign: TextAlign.center),
+        ],
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: _busy ? null : _submit,
+          child: _busy
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(_creating ? t.createAccount : t.signIn),
+        ),
+        TextButton(
+          onPressed: _busy ? null : () => setState(() {
+            _creating = !_creating;
+            _error = null;
+          }),
+          child: Text(_creating ? t.haveAccount : t.noAccount),
         ),
       ]),
     );

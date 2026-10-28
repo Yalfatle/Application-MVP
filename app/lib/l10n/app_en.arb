@@ -1,7 +1,6 @@
 {
   "@@locale": "en",
   "appName": "Mukhtabarat",
-
   "ok": "OK",
   "cancel": "Cancel",
   "save": "Save",
@@ -28,13 +27,11 @@
   "signOut": "Sign out",
   "profile": "Profile",
   "nothingHere": "Nothing here yet",
-
   "rolePatient": "Patient",
   "roleClerk": "Clerk",
   "roleRunner": "Runner",
   "roleLabAdmin": "Lab owner",
   "roleSuperAdmin": "Platform admin",
-
   "loginWelcome": "Book lab tests at home",
   "patientTab": "Patient",
   "staffTab": "Lab staff",
@@ -43,14 +40,26 @@
   "invalidPhone": "Enter a valid Iraqi mobile number",
   "sendCode": "Send code on WhatsApp",
   "codeSentTo": "We sent a code to {phone} on WhatsApp",
-  "@codeSentTo": { "placeholders": { "phone": { "type": "String" } } },
+  "@codeSentTo": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
   "codeLabel": "6-digit code",
   "invalidCode": "That code isn't right. Check WhatsApp and try again.",
   "verify": "Verify",
   "changeNumber": "Change number",
   "resendCode": "Resend code",
   "resendIn": "Resend in {seconds}s",
-  "@resendIn": { "placeholders": { "seconds": { "type": "int" } } },
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "emailOrPhone": "Email or mobile number",
   "password": "Password",
   "signIn": "Sign in",
@@ -58,14 +67,31 @@
   "yourName": "Your name",
   "nameNeeded": "What's your name? The lab will use it when they visit.",
   "continueLabel": "Continue",
-
   "joinTitle": "Join {lab}",
-  "@joinTitle": { "placeholders": { "lab": { "type": "String" } } },
+  "@joinTitle": {
+    "placeholders": {
+      "lab": {
+        "type": "String"
+      }
+    }
+  },
   "joinAs": "You've been invited as: {role}",
-  "@joinAs": { "placeholders": { "role": { "type": "String" } } },
+  "@joinAs": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "inviteInvalid": "This invite link has expired or was already used. Ask the lab owner for a new one.",
   "inviteValidUntil": "This link works until {time}",
-  "@inviteValidUntil": { "placeholders": { "time": { "type": "String" } } },
+  "@inviteValidUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "createAccount": "Create account",
   "fullName": "Full name",
   "email": "Email",
@@ -76,7 +102,6 @@
   "passwordsDontMatch": "Passwords don't match",
   "accountCreated": "Account created. Sign in with your new details.",
   "accountExists": "An account with this email or number already exists.",
-
   "labsTitle": "Labs",
   "searchLabs": "Search labs",
   "noLabs": "No labs available yet",
@@ -84,8 +109,13 @@
   "noPackages": "This lab hasn't listed any tests yet",
   "book": "Book",
   "priceIqd": "{price} IQD",
-  "@priceIqd": { "placeholders": { "price": { "type": "String" } } },
-
+  "@priceIqd": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "chooseLocation": "Where should the lab come?",
   "useMyLocation": "Use my location",
   "dragPinHint": "Move the map so the pin sits on your home",
@@ -97,7 +127,6 @@
   "bookingQueued": "No connection right now. Your booking is saved and will be sent as soon as you're back online.",
   "locationOff": "Location is off. Move the pin by hand, or turn on location.",
   "findingYou": "Finding your location…",
-
   "myOrders": "My bookings",
   "noOrders": "No bookings yet. Pick a lab to book your first test.",
   "statusPending": "Waiting for the lab",
@@ -117,14 +146,25 @@
   "openFile": "Open",
   "messageLab": "Message the lab",
   "runnerOnTheWay": "{name} is on the way",
-  "@runnerOnTheWay": { "placeholders": { "name": { "type": "String" } } },
+  "@runnerOnTheWay": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "lastSeenMinutes": "Last updated {minutes} min ago",
-  "@lastSeenMinutes": { "placeholders": { "minutes": { "type": "int" } } },
+  "@lastSeenMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "trackingNotStarted": "Tracking starts when the runner sets off",
   "you": "You",
   "runner": "Runner",
   "timeline": "Progress",
-
   "ordersTitle": "Orders",
   "tabNew": "New",
   "tabActive": "In progress",
@@ -143,7 +183,13 @@
   "copyLocationLink": "Copy location link",
   "patientNote": "Note from patient",
   "assignedTo": "Runner: {name}",
-  "@assignedTo": { "placeholders": { "name": { "type": "String" } } },
+  "@assignedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "unassigned": "No runner yet",
   "tripActive": "Trip in progress. Your location is being shared with the patient.",
   "keepAppOpen": "Keep the app open on the way so the patient can see you coming.",
@@ -159,7 +205,6 @@
   "typeMessage": "Type a message",
   "send": "Send",
   "viaWhatsApp": "WhatsApp",
-
   "labDetails": "Lab details",
   "nameAr": "Name (Arabic)",
   "nameEn": "Name (English)",
@@ -193,10 +238,22 @@
   "makeRunner": "Make runner",
   "removeFromLab": "Remove from lab",
   "removeConfirm": "Remove {name} from the lab?",
-  "@removeConfirm": { "placeholders": { "name": { "type": "String" } } },
+  "@removeConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "openInvites": "Open invites",
   "expiresInMinutes": "Expires in {minutes} min",
-  "@expiresInMinutes": { "placeholders": { "minutes": { "type": "int" } } },
+  "@expiresInMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "revoke": "Revoke",
   "earnings": "Earnings",
   "thisMonth": "This month",
@@ -204,7 +261,6 @@
   "completedOrders": "Completed orders",
   "revenue": "Revenue",
   "platformFee": "Platform fee",
-
   "allLabs": "All labs",
   "addLab": "Add lab",
   "hidden": "Hidden",
@@ -218,5 +274,7 @@
   "labFeeHint": "Leave empty to use the default",
   "users": "Users",
   "searchUsers": "Search by name, number or email",
-  "manage": "Manage"
+  "manage": "Manage",
+  "haveAccount": "Already have an account? Sign in",
+  "noAccount": "New here? Create an account"
 }

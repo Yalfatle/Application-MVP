@@ -12,7 +12,7 @@
 -- =====================================================================
 
 create extension if not exists pg_net  with schema extensions;
-create extension if not exists pg_cron;
+create extension if not exists pg_cron with schema pg_catalog;
 
 create table public.conversations (
   id               uuid primary key default gen_random_uuid(),

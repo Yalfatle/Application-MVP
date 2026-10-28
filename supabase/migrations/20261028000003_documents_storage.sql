@@ -124,6 +124,9 @@ create policy "documents: purge" on storage.objects for delete to authenticated
   using (bucket_id = 'patient-documents' and public.is_super_admin());
 
 -- Lab photos: public to view, lab admins manage their folder ({lab_id}/...).
+-- (Storage needs a read policy too before it will delete a file.)
+create policy "lab photos: read" on storage.objects for select to anon, authenticated
+  using (bucket_id = 'lab-photos');
 create policy "lab photos: write" on storage.objects for insert to authenticated
   with check (bucket_id = 'lab-photos' and public.has_lab_role(public.path_lab(name), 'lab_admin'));
 create policy "lab photos: update" on storage.objects for update to authenticated
