@@ -167,3 +167,4 @@ app.*.symbols
 .env
 
 supabase/config.toml
+android_keys.txt
