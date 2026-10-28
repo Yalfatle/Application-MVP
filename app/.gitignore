@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Real config stays on your machine
+config/dev.json
+config/prod.json
+android/secrets.properties
+.env
